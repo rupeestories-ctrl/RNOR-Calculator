@@ -1,0 +1,652 @@
+import { useState } from "react";
+
+const FONT = `@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap');`;
+
+const CSS = `
+${FONT}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0c0c0c;
+  --s1:       #141414;
+  --s2:       #1a1a1a;
+  --s3:       #222222;
+  --br:       #282828;
+  --gold:     #c9a227;
+  --gold-lt:  #e8bf45;
+  --gold-dim: rgba(201,162,39,0.12);
+  --red:      #d95f5f;
+  --green:    #52b07a;
+  --blue:     #5291d6;
+  --orange:   #d4804a;
+  --text:     #e6e2da;
+  --muted:    #6e6a64;
+  --serif:    'Playfair Display', Georgia, serif;
+  --mono:     'IBM Plex Mono', monospace;
+  --sans:     'IBM Plex Sans', sans-serif;
+}
+
+body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
+
+.shell { max-width: 720px; margin: 0 auto; padding: 36px 22px 80px; }
+
+/* ── Header ── */
+.hd { border-bottom: 1px solid var(--br); padding-bottom: 20px; margin-bottom: 34px; }
+.hd-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.hd h1 { font-family: var(--serif); font-size: 26px; font-weight: 900; color: var(--gold); line-height: 1.1; }
+.hd-sub { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 5px; text-transform: uppercase; letter-spacing: 1.5px; }
+.hd-fy { font-family: var(--mono); font-size: 11px; color: var(--muted); text-align: right; line-height: 1.8; }
+
+/* ── Progress ── */
+.prog { display: flex; gap: 5px; margin-bottom: 34px; }
+.ps { flex: 1; height: 2px; background: var(--br); border-radius: 1px; transition: background .3s; }
+.ps.act { background: var(--gold); }
+.ps.done { background: rgba(201,162,39,.35); }
+
+/* ── Step header ── */
+.sh { margin-bottom: 26px; }
+.sl { font-family: var(--mono); font-size: 10px; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 7px; }
+.st { font-family: var(--serif); font-size: 21px; font-weight: 700; line-height: 1.25; }
+.ss { font-size: 13px; color: var(--muted); margin-top: 7px; line-height: 1.6; }
+
+/* ── Radio cards ── */
+.rc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 9px; }
+.rc {
+  background: var(--s1); border: 1px solid var(--br);
+  border-radius: 4px; padding: 11px 13px; cursor: pointer;
+  transition: border-color .2s, background .2s;
+}
+.rc:hover { border-color: var(--muted); }
+.rc.on { border-color: var(--gold); background: var(--gold-dim); }
+.rc-lbl { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 3px; }
+.rc-sub { font-size: 11px; color: var(--muted); line-height: 1.4; }
+
+/* ── Toggle ── */
+.tg-row { display: flex; justify-content: space-between; align-items: center; padding: 13px 0; border-bottom: 1px solid var(--br); }
+.tg-info .tg-lbl { font-size: 14px; color: var(--text); }
+.tg-info .tg-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.knob { width: 38px; height: 20px; background: var(--br); border-radius: 10px; cursor: pointer; position: relative; transition: background .2s; flex-shrink: 0; }
+.knob.on { background: var(--gold); }
+.knob::after { content: ''; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; background: #fff; border-radius: 50%; transition: transform .2s; }
+.knob.on::after { transform: translateX(18px); }
+
+/* ── Day inputs ── */
+.fy-grid { display: flex; flex-direction: column; gap: 0; margin-bottom: 8px; }
+.fy-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 10px 0; border-bottom: 1px solid var(--br);
+}
+.fy-row:first-child { border-top: 1px solid var(--br); }
+.fy-label { font-family: var(--mono); font-size: 11px; color: var(--muted); width: 90px; flex-shrink: 0; }
+.fy-label.curr { color: var(--gold); }
+.fy-slider { flex: 1; -webkit-appearance: none; appearance: none; height: 3px; background: var(--br); border-radius: 2px; outline: none; cursor: pointer; }
+.fy-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; background: var(--gold); border-radius: 50%; cursor: pointer; }
+.fy-val { font-family: var(--mono); font-size: 13px; color: var(--text); width: 36px; text-align: right; }
+.fy-unit { font-family: var(--mono); font-size: 10px; color: var(--muted); width: 24px; }
+.fy-bar { width: 100%; height: 2px; background: var(--br); border-radius: 1px; margin-top: 2px; }
+.fy-bar-fill { height: 100%; border-radius: 1px; background: var(--gold); transition: width .15s; opacity: .5; }
+
+.section-lbl { font-family: var(--mono); font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; margin: 22px 0 10px; }
+
+/* NRI counter */
+.nri-counter { background: var(--s1); border: 1px solid var(--br); border-radius: 4px; padding: 20px; margin-bottom: 16px; }
+.nri-count-display { font-family: var(--serif); font-size: 52px; font-weight: 900; color: var(--gold); text-align: center; line-height: 1; margin-bottom: 6px; }
+.nri-count-sub { font-family: var(--mono); font-size: 11px; color: var(--muted); text-align: center; }
+.nri-btns { display: flex; gap: 12px; justify-content: center; margin-top: 16px; }
+.nri-btn { width: 42px; height: 42px; border-radius: 50%; background: var(--s2); border: 1px solid var(--br); color: var(--text); font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+.nri-btn:hover { border-color: var(--gold); color: var(--gold); }
+.nri-dots { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+.nri-dot { width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--br); background: var(--s2); transition: all .2s; }
+.nri-dot.nri { background: var(--gold); border-color: var(--gold); }
+.nri-dot.res { background: var(--s3); border-color: var(--muted); }
+
+/* ── Buttons ── */
+.btn-row { display: flex; gap: 10px; margin-top: 28px; }
+.btn { padding: 12px 24px; font-family: var(--mono); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; border: none; border-radius: 3px; cursor: pointer; transition: all .2s; }
+.btn-p { background: var(--gold); color: #0c0c0c; }
+.btn-p:hover { background: var(--gold-lt); }
+.btn-g { background: transparent; color: var(--muted); border: 1px solid var(--br); }
+.btn-g:hover { border-color: var(--muted); color: var(--text); }
+
+/* ── Results ── */
+.status-hero {
+  background: var(--s1); border-radius: 6px; padding: 30px 28px;
+  margin-bottom: 24px; position: relative; overflow: hidden;
+  border: 1px solid var(--br);
+}
+.status-hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+.status-hero.nri::before { background: var(--blue); }
+.status-hero.rnor::before { background: var(--green); }
+.status-hero.ror::before { background: var(--red); }
+
+.status-badge {
+  display: inline-block; font-family: var(--mono); font-size: 11px;
+  padding: 4px 10px; border-radius: 2px; text-transform: uppercase;
+  letter-spacing: 2px; margin-bottom: 16px;
+}
+.badge-nri { background: rgba(82,145,214,.15); color: var(--blue); }
+.badge-rnor { background: rgba(82,176,122,.15); color: var(--green); }
+.badge-ror { background: rgba(217,95,95,.15); color: var(--red); }
+
+.status-name { font-family: var(--serif); font-size: 38px; font-weight: 900; line-height: 1.1; margin-bottom: 8px; }
+.status-name.nri { color: var(--blue); }
+.status-name.rnor { color: var(--green); }
+.status-name.ror { color: var(--red); }
+
+.status-full { font-size: 14px; color: var(--muted); margin-bottom: 14px; font-style: italic; font-family: var(--serif); }
+.status-reason { font-size: 13px; color: var(--text); line-height: 1.7; }
+
+/* Condition rows */
+.cond-grid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+.cond-row { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; background: var(--s1); border: 1px solid var(--br); border-radius: 4px; }
+.cond-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.cond-text strong { display: block; font-size: 13px; font-weight: 500; margin-bottom: 3px; }
+.cond-text span { font-size: 12px; color: var(--muted); line-height: 1.5; font-family: var(--mono); }
+.cond-row.pass { border-left: 3px solid var(--green); }
+.cond-row.fail { border-left: 3px solid var(--br); opacity: .7; }
+.cond-row.warn { border-left: 3px solid var(--orange); }
+
+/* Implications */
+.impl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
+.impl-card { background: var(--s1); border: 1px solid var(--br); border-radius: 4px; padding: 14px 16px; }
+.impl-icon { font-size: 16px; margin-bottom: 8px; }
+.impl-title { font-size: 12px; font-weight: 500; margin-bottom: 4px; }
+.impl-val { font-family: var(--mono); font-size: 11px; line-height: 1.5; }
+.impl-val.good { color: var(--green); }
+.impl-val.bad { color: var(--red); }
+.impl-val.mid { color: var(--orange); }
+.impl-val.neu { color: var(--muted); }
+
+/* RNOR window */
+.rnor-window { background: var(--gold-dim); border: 1px solid rgba(201,162,39,.3); border-radius: 4px; padding: 16px 18px; margin-bottom: 24px; }
+.rnor-window-title { font-family: var(--mono); font-size: 10px; color: var(--gold); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
+.rnor-window-body { font-size: 13px; color: var(--text); line-height: 1.7; }
+
+/* Actions */
+.actions-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 32px; }
+.action { display: flex; gap: 14px; align-items: flex-start; background: var(--s1); border: 1px solid var(--br); border-radius: 4px; padding: 14px 16px; }
+.action-num { font-family: var(--serif); font-size: 28px; font-weight: 900; color: var(--gold); opacity: .3; line-height: 1; flex-shrink: 0; width: 28px; }
+.action-title { font-size: 13px; font-weight: 500; margin-bottom: 5px; }
+.action-body { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+.section-title { font-family: var(--serif); font-size: 16px; font-weight: 700; margin-bottom: 14px; padding-bottom: 7px; border-bottom: 1px solid var(--br); }
+
+.restart { margin-top: 36px; border-top: 1px solid var(--br); padding-top: 22px; display: flex; justify-content: space-between; align-items: center; }
+.restart-note { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+/* info banner */
+.info-banner { background: var(--s2); border: 1px solid var(--br); border-radius: 4px; padding: 12px 14px; margin-top: 16px; }
+.info-banner p { font-size: 12px; color: var(--muted); line-height: 1.6; }
+.info-banner strong { color: var(--text); }
+
+@media(max-width:560px){
+  .impl-grid { grid-template-columns: 1fr; }
+  .rc-grid { grid-template-columns: 1fr 1fr; }
+}
+`;
+
+// ── FY helpers ──────────────────────────────────────────────────────────────
+const CURR_FY = "FY 2025-26";
+const PREV_FY_LABELS = [
+  "FY 2024-25","FY 2023-24","FY 2022-23","FY 2021-22",
+  "FY 2020-21","FY 2019-20","FY 2018-19"
+];
+
+// ── Core logic ───────────────────────────────────────────────────────────────
+function compute({ citizenship, situation, deemedResident, currDays, prevDays, nriYears }) {
+  // Exception: for citizens going abroad for employment/crew, or citizen/PIO visiting India
+  // → threshold for additional condition rises from 60 to 182
+  const exceptionApplies =
+    (citizenship === "citizen" || citizenship === "pio") &&
+    (situation === "employment_abroad" || situation === "visiting" || situation === "crew");
+
+  const thresh2 = exceptionApplies ? 182 : 60;
+  const prev4 = prevDays.slice(0, 4).reduce((a, b) => a + b, 0);
+  const prev7 = prevDays.reduce((a, b) => a + b, 0);
+
+  const cond1 = currDays >= 182;
+  const cond2 = currDays >= thresh2 && prev4 >= 365;
+  const isResident = cond1 || cond2;
+
+  // Deemed resident (Finance Act 2020): Indian citizen, not taxable elsewhere → RNOR
+  if (!isResident && citizenship === "citizen" && deemedResident) {
+    return {
+      status: "RNOR", trigger: "deemed",
+      cond1, cond2, exceptionApplies, thresh2,
+      rnorA: false, rnorB: false,
+      prev4, prev7, nriYears,
+      currDays
+    };
+  }
+
+  if (!isResident) {
+    return {
+      status: "NRI", trigger: "non_resident",
+      cond1, cond2, exceptionApplies, thresh2,
+      rnorA: false, rnorB: false,
+      prev4, prev7, nriYears,
+      currDays
+    };
+  }
+
+  // RNOR checks
+  const rnorA = nriYears >= 9;
+  const rnorB = prev7 <= 729;
+
+  if (rnorA || rnorB) {
+    return {
+      status: "RNOR", trigger: "ordinary_rnor",
+      cond1, cond2, exceptionApplies, thresh2,
+      rnorA, rnorB,
+      prev4, prev7, nriYears,
+      currDays
+    };
+  }
+
+  return {
+    status: "ROR", trigger: "ror",
+    cond1, cond2, exceptionApplies, thresh2,
+    rnorA, rnorB,
+    prev4, prev7, nriYears,
+    currDays
+  };
+}
+
+// ── Sub-components ───────────────────────────────────────────────────────────
+function RadioCards({ options, value, onChange }) {
+  return (
+    <div className="rc-grid">
+      {options.map(o => (
+        <div key={o.value} className={`rc ${value === o.value ? "on" : ""}`} onClick={() => onChange(o.value)}>
+          <div className="rc-lbl">{o.label}</div>
+          {o.sub && <div className="rc-sub">{o.sub}</div>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Toggle({ label, sub, value, onChange }) {
+  return (
+    <div className="tg-row">
+      <div className="tg-info">
+        <div className="tg-lbl">{label}</div>
+        {sub && <div className="tg-sub">{sub}</div>}
+      </div>
+      <div className={`knob ${value ? "on" : ""}`} onClick={() => onChange(!value)} />
+    </div>
+  );
+}
+
+function DaySlider({ label, value, onChange, max = 366, isCurrent = false }) {
+  return (
+    <div className="fy-row">
+      <div className={`fy-label ${isCurrent ? "curr" : ""}`}>{label}</div>
+      <input
+        className="fy-slider"
+        type="range" min={0} max={max} step={1}
+        value={value}
+        onChange={e => onChange(Number(e.target.value))}
+      />
+      <div className="fy-val">{value}</div>
+      <div className="fy-unit">days</div>
+    </div>
+  );
+}
+
+// ── Results page ─────────────────────────────────────────────────────────────
+function Results({ r, onRestart }) {
+  const sc = r.status.toLowerCase();
+
+  const fullNames = {
+    NRI: "Non-Resident Indian",
+    RNOR: "Resident but Not Ordinarily Resident",
+    ROR: "Resident and Ordinarily Resident"
+  };
+
+  const reasonText = {
+    non_resident: `You were present in India for ${r.currDays} days in ${CURR_FY}. ` +
+      (r.exceptionApplies
+        ? `Because the citizen/PIO exception applies, both residency conditions require 182+ days. Neither was met.`
+        : `You did not meet either residency condition (182-day or 60-day + 4-year rule).`),
+    deemed: `You are an Indian citizen not liable to tax in any other country. Under Finance Act 2020, you are a "deemed resident" classified as RNOR.`,
+    ordinary_rnor: `You are resident in India but qualify as RNOR because ` +
+      [r.rnorA ? `you were NRI in ${r.nriYears} of the preceding 10 financial years` : null,
+       r.rnorB ? `you spent only ${r.prev7} days in India across the preceding 7 FYs (≤729 threshold)` : null]
+        .filter(Boolean).join(" and ") + ".",
+    ror: `You are fully resident and ordinarily resident. You do not meet either RNOR condition.`
+  };
+
+  const conditions = [];
+
+  if (r.status === "NRI") {
+    conditions.push({ pass: r.cond1, label: "Basic condition (182-day rule)", detail: `${r.currDays} days in ${CURR_FY} — need 182+ days` });
+    if (!r.exceptionApplies) {
+      conditions.push({ pass: r.cond2, label: `Additional condition (${r.thresh2}-day + 4-year)`, detail: `${r.currDays} days this FY (need ${r.thresh2}+) and ${r.prev4} days in past 4 FYs (need 365+)` });
+    } else {
+      conditions.push({ warn: true, label: "Exception applied — 60-day threshold raised to 182", detail: "Citizen/PIO going abroad for employment or visiting India" });
+    }
+  }
+
+  if (r.status === "RNOR" && r.trigger === "ordinary_rnor") {
+    conditions.push({ pass: r.cond1 || r.cond2, label: "Resident in India this FY", detail: r.cond1 ? `${r.currDays} days — basic 182-day condition met` : `${r.currDays} days + ${r.prev4} past-4yr days — additional condition met` });
+    conditions.push({ pass: r.rnorA, label: "RNOR Condition A — NRI in 9 of 10 preceding FYs", detail: `${r.nriYears} of 10 preceding FYs as NRI (need ≥9)` });
+    conditions.push({ pass: r.rnorB, label: "RNOR Condition B — ≤729 days in past 7 FYs", detail: `${r.prev7} total days in preceding 7 FYs (need ≤729)` });
+  }
+
+  if (r.status === "ROR") {
+    conditions.push({ pass: true, label: "Resident this FY", detail: r.cond1 ? `${r.currDays} days — 182-day condition met` : `${r.currDays} days + ${r.prev4} past-4yr days — additional condition met` });
+    conditions.push({ pass: false, label: "RNOR Condition A — NOT met", detail: `Only ${r.nriYears} of 10 preceding FYs as NRI (need ≥9)` });
+    conditions.push({ pass: false, label: "RNOR Condition B — NOT met", detail: `${r.prev7} days in past 7 FYs — exceeds the 729-day threshold` });
+  }
+
+  const implications = {
+    NRI: [
+      { icon: "🇺🇸", title: "Foreign income", val: "Not taxable in India", cls: "good" },
+      { icon: "🇮🇳", title: "India income", val: "Taxable in India only", cls: "neu" },
+      { icon: "💼", title: "Roth conversion window", val: "Not applicable yet", cls: "mid" },
+      { icon: "🏦", title: "US 401K / retirement", val: "Not taxable in India", cls: "good" },
+      { icon: "📋", title: "Schedule FA (foreign assets)", val: "Not required", cls: "good" },
+      { icon: "🔄", title: "DTAA benefit", val: "Available on India income", cls: "neu" },
+    ],
+    RNOR: [
+      { icon: "🌍", title: "Foreign income", val: "Not taxable in India ✓", cls: "good" },
+      { icon: "🇮🇳", title: "India income", val: "Taxable in India", cls: "neu" },
+      { icon: "💰", title: "Roth conversion window", val: "Open — use it now", cls: "good" },
+      { icon: "🏦", title: "US 401K distributions", val: "Likely exempt in India", cls: "good" },
+      { icon: "📋", title: "Schedule FA (foreign assets)", val: "May not be required", cls: "good" },
+      { icon: "🔄", title: "DTAA benefit", val: "Available — verify with CPA", cls: "neu" },
+    ],
+    ROR: [
+      { icon: "🌍", title: "World income", val: "Fully taxable in India", cls: "bad" },
+      { icon: "🇮🇳", title: "India income", val: "Taxable in India", cls: "bad" },
+      { icon: "💰", title: "Roth conversion window", val: "Closed — RNOR window missed", cls: "bad" },
+      { icon: "🏦", title: "US 401K distributions", val: "Taxable in India as income", cls: "bad" },
+      { icon: "📋", title: "Schedule FA (foreign assets)", val: "Required — disclose all", cls: "mid" },
+      { icon: "🔄", title: "DTAA benefit", val: "Available on foreign income", cls: "neu" },
+    ]
+  };
+
+  const actions = {
+    NRI: [
+      { title: "Maintain NRI status carefully", body: "Track your India days. 182+ days in any FY automatically makes you resident. Even the 60-day + 4-year rule can trap frequent visitors." },
+      { title: "Set up NRE/NRO accounts before returning", body: "NRE accounts let you hold foreign income tax-free in India. Once you become RNOR/ROR, you must re-designate accounts to RFC." },
+      { title: "Build your RNOR plan now", body: "When you eventually return, RNOR status typically lasts 2-3 years. That window is your best opportunity to convert 401K to Roth and reset cost basis on US assets." },
+    ],
+    RNOR: [
+      { title: "Execute your Roth conversion strategy", body: "This is your highest-leverage window. Convert Traditional 401K → Roth IRA during RNOR years. Indian tax law currently does not tax foreign retirement income during RNOR. Map annual conversion amounts against your US bracket." },
+      { title: "Convert NRE accounts to RFC accounts", body: "Once resident (even RNOR), you must re-designate NRE/NRO accounts to RFC (Resident Foreign Currency) accounts within a reasonable time. RFC accounts maintain foreign currency without Indian tax implications during RNOR." },
+      { title: "Break state tax residency cleanly", body: "File a final resident return in your former US state. Close local ties — voter registration, driver's license, professional licenses. High-tax states (CA, NY, NJ) audit NRIs who maintain connections." },
+    ],
+    ROR: [
+      { title: "Disclose all foreign assets in Schedule FA", body: "ROR status requires full disclosure of all foreign assets including bank accounts, equities, retirement accounts, and real estate in Schedule FA of your Indian ITR. Non-disclosure is a serious offense." },
+      { title: "Understand the DTAA treaty for income relief", body: "India-US DTAA provides relief on double taxation. Claim treaty benefits on US-source income. Interest, dividends, and capital gains have specific treaty treatments — consult a cross-border CPA." },
+      { title: "Plan for future returns to India strategically", body: "If you plan to move back again, the RNOR window only applies for a limited time. Significant foreign asset restructuring is better done before becoming ROR than after." },
+    ]
+  };
+
+  return (
+    <div>
+      <div className={`status-hero ${sc}`}>
+        <div className={`status-badge badge-${sc}`}>Your status · {CURR_FY}</div>
+        <div className={`status-name ${sc}`}>{r.status}</div>
+        <div className="status-full">{fullNames[r.status]}</div>
+        <div className="status-reason">{reasonText[r.trigger]}</div>
+      </div>
+
+      {r.status === "RNOR" && r.trigger !== "deemed" && (
+        <div className="rnor-window">
+          <div className="rnor-window-title">RNOR Window — What This Means</div>
+          <div className="rnor-window-body">
+            RNOR is a transitional status — typically 2 to 3 years after returning to India. During this window, your foreign income (including US salary, dividends, and retirement distributions) is <strong style={{color:'var(--gold)'}}>not taxable in India</strong>. This is the optimal time to execute Roth conversions, reset US asset cost basis, and restructure cross-border holdings.
+          </div>
+        </div>
+      )}
+
+      <div className="section-title">How this was determined</div>
+      <div className="cond-grid">
+        {conditions.map((c, i) => (
+          <div key={i} className={`cond-row ${c.warn ? "warn" : c.pass ? "pass" : "fail"}`}>
+            <div className="cond-icon">{c.warn ? "⚡" : c.pass ? "✓" : "✗"}</div>
+            <div className="cond-text">
+              <strong>{c.label}</strong>
+              <span>{c.detail}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="section-title">Tax implications</div>
+      <div className="impl-grid">
+        {implications[r.status].map((im, i) => (
+          <div key={i} className="impl-card">
+            <div className="impl-icon">{im.icon}</div>
+            <div className="impl-title">{im.title}</div>
+            <div className={`impl-val ${im.cls}`}>{im.val}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="section-title">Your top actions</div>
+      <div className="actions-grid">
+        {actions[r.status].map((a, i) => (
+          <div key={i} className="action">
+            <div className="action-num">{i + 1}</div>
+            <div>
+              <div className="action-title">{a.title}</div>
+              <div className="action-body">{a.body}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="restart">
+        <div className="restart-note">r/rupeestories · rupeestories.substack.com</div>
+        <button className="btn btn-g" onClick={onRestart}>↺ Recalculate</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Main App ─────────────────────────────────────────────────────────────────
+const STEPS = ["Profile", "Days in India", "History", "Result"];
+
+export default function App() {
+  const [step, setStep] = useState(0);
+  const [result, setResult] = useState(null);
+
+  const [citizenship, setCitizenship] = useState("citizen");
+  const [situation, setSituation] = useState("employment_abroad");
+  const [deemedResident, setDeemedResident] = useState(false);
+
+  const [currDays, setCurrDays] = useState(200);
+  const [prevDays, setPrevDays] = useState([180, 60, 30, 30, 20, 20, 20]);
+
+  const [nriYears, setNriYears] = useState(9);
+
+  function setPrev(i, v) {
+    const nd = [...prevDays];
+    nd[i] = v;
+    setPrevDays(nd);
+  }
+
+  function handleRun() {
+    const r = compute({ citizenship, situation, deemedResident, currDays, prevDays, nriYears });
+    setResult(r);
+    setStep(3);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function handleRestart() {
+    setStep(0);
+    setResult(null);
+  }
+
+  const prev4Total = prevDays.slice(0, 4).reduce((a, b) => a + b, 0);
+  const prev7Total = prevDays.reduce((a, b) => a + b, 0);
+
+  return (
+    <>
+      <style>{CSS}</style>
+      <div className="shell">
+        {/* Header */}
+        <div className="hd">
+          <div className="hd-top">
+            <div>
+              <h1>RNOR Status Calculator</h1>
+              <div className="hd-sub">r/rupeestories · Indian Tax Residential Status</div>
+            </div>
+            <div className="hd-fy">
+              <span>Assessment: {CURR_FY}</span><br />
+              <span>Free. No data stored.</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Progress */}
+        <div className="prog">
+          {STEPS.map((s, i) => (
+            <div key={s} className={`ps ${i === step ? "act" : i < step ? "done" : ""}`} />
+          ))}
+        </div>
+
+        {/* ── STEP 0: Profile ── */}
+        {step === 0 && (
+          <div>
+            <div className="sh">
+              <div className="sl">Step 1 of 3</div>
+              <div className="st">Your citizenship & situation</div>
+              <div className="ss">This determines whether the 60-day exception applies to you — it changes the residency threshold significantly.</div>
+            </div>
+
+            <div className="section-lbl">Citizenship / origin</div>
+            <RadioCards
+              value={citizenship}
+              onChange={setCitizenship}
+              options={[
+                { value: "citizen", label: "Indian Citizen", sub: "Indian passport holder" },
+                { value: "pio", label: "PIO / OCI", sub: "Person of Indian Origin" },
+                { value: "foreign", label: "Foreign National", sub: "No Indian origin" },
+              ]}
+            />
+
+            <div className="section-lbl" style={{ marginTop: 22 }}>Your situation this financial year</div>
+            <RadioCards
+              value={situation}
+              onChange={setSituation}
+              options={[
+                { value: "employment_abroad", label: "Left India for employment abroad", sub: "Going overseas for work" },
+                { value: "visiting", label: "Visiting India (living abroad)", sub: "NRI/citizen visiting from overseas" },
+                { value: "crew", label: "Crew of Indian ship", sub: "Working on Indian vessel" },
+                { value: "other", label: "Living in India / other", sub: "No special situation" },
+              ]}
+            />
+
+            {citizenship === "citizen" && (
+              <>
+                <div className="section-lbl" style={{ marginTop: 22 }}>Deemed resident provision (Finance Act 2020)</div>
+                <Toggle
+                  label="Indian citizen not liable to tax in any country"
+                  sub="Income from India > ₹15 lakhs — stateless from tax perspective"
+                  value={deemedResident}
+                  onChange={setDeemedResident}
+                />
+              </>
+            )}
+
+            <div className="info-banner">
+              <p><strong>The 60-day exception:</strong> If you are an Indian citizen leaving for employment abroad, or a citizen/PIO visiting India, the secondary residency condition uses 182 days instead of 60 days — making it much harder to accidentally become resident.</p>
+            </div>
+
+            <div className="btn-row">
+              <button className="btn btn-p" onClick={() => setStep(1)}>Next: Days in India →</button>
+            </div>
+          </div>
+        )}
+
+        {/* ── STEP 1: Days ── */}
+        {step === 1 && (
+          <div>
+            <div className="sh">
+              <div className="sl">Step 2 of 3</div>
+              <div className="st">Days spent in India</div>
+              <div className="ss">Count all days you were physically present in India — including the day of arrival and departure. Use passport stamps or travel records.</div>
+            </div>
+
+            <div className="section-lbl">Current financial year</div>
+            <div className="fy-grid">
+              <DaySlider label={CURR_FY} value={currDays} onChange={setCurrDays} isCurrent />
+            </div>
+
+            <div className="section-lbl">Preceding 7 financial years</div>
+            <div className="fy-grid">
+              {PREV_FY_LABELS.map((fy, i) => (
+                <DaySlider key={fy} label={fy} value={prevDays[i]} onChange={v => setPrev(i, v)} />
+              ))}
+            </div>
+
+            <div style={{ display: "flex", gap: 12, marginTop: 14 }}>
+              <div className="info-banner" style={{ flex: 1 }}>
+                <p>Past 4 FYs total: <strong>{prev4Total} days</strong> (365+ needed for additional condition)</p>
+              </div>
+              <div className="info-banner" style={{ flex: 1 }}>
+                <p>Past 7 FYs total: <strong>{prev7Total} days</strong> (≤729 triggers RNOR Condition B)</p>
+              </div>
+            </div>
+
+            <div className="btn-row">
+              <button className="btn btn-g" onClick={() => setStep(0)}>← Back</button>
+              <button className="btn btn-p" onClick={() => setStep(2)}>Next: History →</button>
+            </div>
+          </div>
+        )}
+
+        {/* ── STEP 2: NRI History ── */}
+        {step === 2 && (
+          <div>
+            <div className="sh">
+              <div className="sl">Step 3 of 3</div>
+              <div className="st">NRI history — preceding 10 FYs</div>
+              <div className="ss">How many of the last 10 financial years (FY 2015-16 to FY 2024-25) were you classified as a Non-Resident Indian? This is Condition A for RNOR status.</div>
+            </div>
+
+            <div className="nri-counter">
+              <div className="nri-count-display">{nriYears}</div>
+              <div className="nri-count-sub">of 10 preceding FYs as NRI</div>
+              <div className="nri-btns">
+                <button className="nri-btn" onClick={() => setNriYears(Math.max(0, nriYears - 1))}>−</button>
+                <button className="nri-btn" onClick={() => setNriYears(Math.min(10, nriYears + 1))}>+</button>
+              </div>
+              <div className="nri-dots">
+                {Array.from({ length: 10 }, (_, i) => (
+                  <div
+                    key={i}
+                    className={`nri-dot ${i < nriYears ? "nri" : "res"}`}
+                    onClick={() => setNriYears(i < nriYears ? i : i + 1)}
+                    title={`FY ${2015 + i}-${16 + i}`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="info-banner">
+              <p>
+                <strong>RNOR Condition A</strong> is met if you were NRI in <strong>9 or more</strong> of the 10 preceding FYs. Most NRIs returning after a decade abroad will automatically satisfy this. Condition B (≤729 days in past 7 FYs) is the fallback for those with fewer NRI years.
+              </p>
+            </div>
+
+            <div className="btn-row">
+              <button className="btn btn-g" onClick={() => setStep(1)}>← Back</button>
+              <button className="btn btn-p" onClick={handleRun}>Run Calculator →</button>
+            </div>
+          </div>
+        )}
+
+        {/* ── RESULTS ── */}
+        {step === 3 && result && (
+          <Results r={result} onRestart={handleRestart} />
+        )}
+      </div>
+    </>
+  );
+}
