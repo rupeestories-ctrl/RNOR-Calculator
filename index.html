@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>RNOR Status Calculator · RupeeStories</title>
+<meta name="description" content="Check your Indian tax residential status — NRI, RNOR, or ROR. Enter your return date and days in India per year. Free. No login. No data collected."/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#1a1a2e;
+  --gold:#c9a84c;
+  --gold-lt:#f0d080;
+  --gold-dim:rgba(201,168,76,0.12);
+  --gold-border:rgba(201,168,76,0.35);
+  --cream:#faf8f3;
+  --border:#e8e0d0;
+  --border2:#d4c8b8;
+  --card:#ffffff;
+  --surface:#faf6f0;
+  --muted:#888;
+  --light:#b0a090;
+  --text:#1a1a2e;
+  --green:#2d7a5f;
+  --green-lt:#edf7f1;
+  --red:#c0392b;
+  --red-lt:#fdf0ee;
+  --blue:#2d5fa8;
+  --blue-lt:#eef3fb;
+  --orange:#b86a0a;
+  --serif:'Playfair Display',Georgia,serif;
+  --mono:'DM Mono',monospace;
+  --sans:'DM Sans',sans-serif;
+}
+html,body{background:var(--cream);color:var(--text);font-family:var(--sans);min-height:100vh}
+
+/* ── Header ── */
+.site-header{background:var(--ink);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.site-header a{color:var(--gold);text-decoration:none;font-size:13px;font-weight:500;letter-spacing:0.5px}
+.site-header a:hover{color:var(--gold-lt)}
+
+/* ── Hero ── */
+.hero-banner{background:var(--ink);color:white;padding:48px 24px 40px;text-align:center}
+.hero-banner h1{font-family:var(--serif);font-size:clamp(24px,5vw,44px);font-weight:900;line-height:1.15;margin-bottom:12px}
+.hero-banner h1 em{color:var(--gold);font-style:italic}
+.hero-banner p{font-size:15px;color:rgba(255,255,255,0.65);max-width:500px;margin:0 auto 24px;line-height:1.6}
+.hero-pills{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.pill{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.8);padding:5px 14px;border-radius:20px;font-size:13px;font-weight:500}
+
+/* ── Shell ── */
+.shell{max-width:720px;margin:0 auto;padding:36px 22px 100px}
+
+/* ── Progress ── */
+.prog{display:flex;gap:6px;margin-bottom:36px}
+.ps{flex:1;height:5px;background:var(--border);border-radius:3px;transition:background .3s}
+.ps.act{background:var(--gold)}
+.ps.done{background:rgba(201,168,76,0.35)}
+
+/* ── Steps ── */
+.step{display:none}
+.step.show{display:block}
+.sh{margin-bottom:28px}
+.sl{font-family:var(--mono);font-size:10px;color:var(--gold);text-transform:uppercase;letter-spacing:2px;margin-bottom:7px;font-weight:500}
+.st{font-family:var(--serif);font-size:22px;font-weight:700;line-height:1.25}
+.ss{font-size:13px;color:var(--muted);margin-top:7px;line-height:1.6}
+.sec-lbl{font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin:24px 0 10px}
+
+/* ── Radio cards ── */
+.rc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:9px}
+.rc{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:13px 15px;cursor:pointer;transition:all .2s;box-shadow:0 1px 4px rgba(26,26,46,0.05)}
+.rc:hover{border-color:var(--gold);box-shadow:0 2px 10px rgba(201,168,76,0.15)}
+.rc.on{border-color:var(--gold);background:#fffcf0;box-shadow:0 2px 10px rgba(201,168,76,0.18)}
+.rc-lbl{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px}
+.rc-sub{font-size:11px;color:var(--muted);line-height:1.4}
+
+/* ── Date input ── */
+.date-field{margin-top:6px}
+.date-field label{font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:7px}
+.date-field input[type=date]{
+  width:100%;padding:12px 14px;
+  font-family:var(--sans);font-size:14px;
+  background:var(--card);color:var(--text);
+  border:1.5px solid var(--border);border-radius:10px;
+  outline:none;transition:border-color .2s;
+  -webkit-appearance:none;
+}
+.date-field input[type=date]:focus{border-color:var(--gold)}
+.fy-display{
+  margin-top:10px;padding:10px 14px;
+  background:var(--gold-dim);
+  border:1px solid var(--gold-border);
+  border-radius:8px;
+  font-family:var(--mono);font-size:12px;
+  color:var(--orange);line-height:1.6;
+  display:none;
+}
+.fy-display.show{display:block}
+
+/* ── Toggle ── */
+.tg-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border)}
+.tg-lbl{font-size:14px;color:var(--text);font-weight:500}
+.tg-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.knob{width:40px;height:22px;background:var(--border2);border-radius:11px;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.knob.on{background:var(--gold)}
+.knob::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,0.2)}
+.knob.on::after{transform:translateX(18px)}
+
+/* ── Info box ── */
+.info-box{background:#fffcf0;border:1px solid var(--gold-border);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;padding:12px 15px;margin-top:16px}
+.info-box p{font-size:13px;color:#555;line-height:1.6}
+.info-box strong{color:var(--text)}
+
+/* ── FY Table ── */
+.fy-table-wrap{background:var(--card);border:1.5px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;box-shadow:0 2px 8px rgba(26,26,46,0.05)}
+.fy-table-head{display:grid;grid-template-columns:1fr 130px 90px;gap:0;background:var(--ink);padding:10px 16px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px}
+.fy-row{display:grid;grid-template-columns:1fr 130px 90px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border);transition:background .15s}
+.fy-row:last-child{border-bottom:none}
+.fy-row.return-fy{background:var(--gold-dim);border-bottom:none}
+.fy-row.return-fy .fy-label-text{color:var(--orange);font-weight:600}
+.fy-label-text{font-size:13px;color:var(--text);line-height:1.3}
+.fy-date-text{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px}
+.fy-input{
+  width:110px;padding:7px 10px;
+  font-family:var(--mono);font-size:13px;
+  background:var(--surface);color:var(--text);
+  border:1.5px solid var(--border);border-radius:7px;
+  outline:none;text-align:right;
+  transition:border-color .2s;
+}
+.fy-input:focus{border-color:var(--gold);background:white}
+.fy-badge{
+  font-family:var(--mono);font-size:10px;
+  font-weight:600;padding:3px 8px;
+  border-radius:12px;text-align:center;
+  white-space:nowrap;
+  transition:all .2s;
+}
+.fy-badge.nri{background:var(--blue-lt);color:var(--blue)}
+.fy-badge.res{background:var(--red-lt);color:var(--red)}
+.fy-badge.ret{background:var(--gold-dim);color:var(--orange)}
+
+/* ── Live stats bar ── */
+.stats-bar{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+  margin-bottom:20px;
+}
+.stat-tile{
+  background:var(--card);
+  border:1.5px solid var(--border);
+  border-radius:10px;padding:14px 16px;
+  text-align:center;
+}
+.stat-tile.warn{border-color:rgba(201,168,76,0.5);background:var(--gold-dim)}
+.stat-tile.good{border-color:rgba(45,122,95,0.4);background:var(--green-lt)}
+.stat-tile.bad{border-color:rgba(192,57,43,0.3);background:var(--red-lt)}
+.stat-val{font-family:var(--serif);font-size:22px;font-weight:900;color:var(--ink);line-height:1}
+.stat-val.gold{color:var(--gold)}
+.stat-val.green{color:var(--green)}
+.stat-val.red{color:var(--red)}
+.stat-label{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:4px;letter-spacing:0.5px}
+.stat-threshold{font-family:var(--mono);font-size:10px;margin-top:3px;line-height:1.4}
+
+/* ── Projection input ── */
+.proj-card{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:20px 22px;margin-bottom:16px}
+.proj-card h3{font-family:var(--serif);font-size:16px;font-weight:700;margin-bottom:6px}
+.proj-card p{font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.5}
+.proj-input-row{display:flex;align-items:center;gap:14px}
+.proj-input{
+  width:90px;padding:10px 12px;
+  font-family:var(--mono);font-size:16px;font-weight:600;
+  background:var(--surface);color:var(--text);
+  border:1.5px solid var(--border);border-radius:8px;
+  outline:none;text-align:center;
+  transition:border-color .2s;
+}
+.proj-input:focus{border-color:var(--gold);background:white}
+.proj-input-label{font-size:13px;color:var(--muted)}
+
+/* ── Buttons ── */
+.btn-row{display:flex;gap:10px;margin-top:28px}
+.btn{padding:13px 26px;font-family:var(--sans);font-size:13px;font-weight:600;border:none;border-radius:10px;cursor:pointer;transition:all .2s;letter-spacing:0.2px}
+.btn-p{background:var(--ink);color:white;box-shadow:0 2px 10px rgba(26,26,46,0.2)}
+.btn-p:hover{background:#2d2d4e;transform:translateY(-1px);box-shadow:0 4px 16px rgba(26,26,46,0.25)}
+.btn-g{background:var(--card);color:var(--muted);border:1.5px solid var(--border2)}
+.btn-g:hover{border-color:var(--gold);color:var(--text)}
+
+/* ── Results ── */
+.res-hero{background:var(--ink);border-radius:20px;padding:36px 30px;margin-bottom:24px;color:white;position:relative;overflow:hidden}
+.res-hero::before{content:'';position:absolute;top:-50px;right:-50px;width:180px;height:180px;background:radial-gradient(circle,rgba(201,168,76,0.2) 0%,transparent 70%);pointer-events:none}
+.res-badge{display:inline-block;font-family:var(--mono);font-size:10px;padding:5px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px;font-weight:500;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.8)}
+.status-name{font-family:var(--serif);font-size:clamp(44px,10vw,68px);font-weight:900;line-height:1;margin-bottom:6px;color:var(--gold)}
+.status-full{font-size:14px;color:rgba(255,255,255,0.55);margin-bottom:14px;font-style:italic;font-family:var(--serif)}
+.status-reason{font-size:13px;color:rgba(255,255,255,0.75);line-height:1.7}
+
+/* ── RNOR window box ── */
+.rnor-box{background:#fffcf0;border:1.5px solid var(--gold-border);border-radius:14px;padding:20px 22px;margin-bottom:24px}
+.rnor-box-title{font-family:var(--mono);font-size:10px;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;font-weight:500}
+.rnor-box-body{font-size:13px;color:var(--text);line-height:1.75}
+.rnor-box-body strong{color:var(--orange)}
+
+/* ── Projection table ── */
+.proj-table-wrap{background:var(--card);border:1.5px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:24px}
+.proj-table-head{display:grid;grid-template-columns:130px 80px 100px 1fr;gap:0;background:var(--ink);padding:10px 16px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px}
+.proj-row{display:grid;grid-template-columns:130px 80px 100px 1fr;align-items:center;padding:11px 16px;border-bottom:1px solid var(--border);transition:background .15s}
+.proj-row:last-child{border-bottom:none}
+.proj-row.rnor-row{background:var(--green-lt)}
+.proj-row.ror-row{background:var(--red-lt)}
+.proj-row.nri-row{background:var(--blue-lt)}
+.proj-row.return-row{background:var(--gold-dim)}
+.proj-fy{font-family:var(--mono);font-size:12px;color:var(--text);font-weight:500}
+.proj-days{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:right;padding-right:8px}
+.proj-status{font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;white-space:nowrap}
+.proj-status.nri{background:var(--blue-lt);color:var(--blue)}
+.proj-status.rnor{background:var(--green-lt);color:var(--green)}
+.proj-status.ror{background:var(--red-lt);color:var(--red)}
+.proj-note{font-size:11px;color:var(--muted);padding-left:8px;line-height:1.4}
+
+/* ── Section title ── */
+.sec-title{font-family:var(--serif);font-size:17px;font-weight:700;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--border);margin-top:28px}
+
+/* ── Conditions ── */
+.cond-list{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+.cond{display:flex;gap:12px;align-items:flex-start;padding:13px 15px;background:var(--card);border:1.5px solid var(--border);border-radius:10px}
+.cond.pass{border-left:4px solid var(--green);background:var(--green-lt)}
+.cond.fail{border-left:4px solid var(--border2);opacity:.7}
+.cond.warn{border-left:4px solid var(--gold);background:#fffcf0}
+.cond-icon{font-size:15px;flex-shrink:0;margin-top:1px;width:20px;text-align:center}
+.cond strong{display:block;font-size:13px;font-weight:600;margin-bottom:3px}
+.cond span{font-size:12px;color:var(--muted);line-height:1.5;font-family:var(--mono)}
+
+/* ── Tax implications ── */
+.impl-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
+.impl{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:14px 16px}
+.impl-icon{font-size:18px;margin-bottom:8px}
+.impl-title{font-size:12px;font-weight:600;margin-bottom:4px}
+.impl-val{font-family:var(--mono);font-size:11px;line-height:1.5}
+.impl-val.good{color:var(--green)}
+.impl-val.bad{color:var(--red)}
+.impl-val.mid{color:var(--orange)}
+.impl-val.neu{color:var(--muted)}
+
+/* ── Actions ── */
+.acts{display:flex;flex-direction:column;gap:10px;margin-bottom:32px}
+.act{display:flex;gap:16px;align-items:flex-start;background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:16px 18px}
+.act-num{font-family:var(--serif);font-size:32px;font-weight:900;color:var(--gold);opacity:.3;line-height:1;flex-shrink:0;width:30px}
+.act-title{font-size:13px;font-weight:600;margin-bottom:5px}
+.act-body{font-size:12px;color:var(--muted);line-height:1.6}
+
+/* ── Footer ── */
+.result-footer{margin-top:36px;border-top:2px solid var(--border);padding-top:22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.footer-note{font-family:var(--mono);font-size:11px;color:var(--light)}
+.btn-retake{background:var(--ink);color:var(--gold);border:1.5px solid var(--gold);padding:11px 24px;border-radius:10px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-retake:hover{background:#2d2d4e}
+
+/* ── Export buttons ── */
+.export-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.btn-export{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:var(--sans);font-size:12px;font-weight:600;
+  padding:8px 16px;border-radius:8px;cursor:pointer;
+  border:1.5px solid var(--border);background:var(--card);
+  color:var(--text);transition:all .2s;letter-spacing:0.2px;
+}
+.btn-export:hover{border-color:var(--gold);background:#fffcf0;color:var(--orange)}
+.btn-export svg{width:13px;height:13px;flex-shrink:0}
+
+@media(max-width:600px){
+  .impl-grid{grid-template-columns:1fr}
+  .rc-grid{grid-template-columns:1fr 1fr}
+  .stats-bar{grid-template-columns:1fr 1fr}
+  .fy-table-head,.fy-row{grid-template-columns:1fr 100px 70px}
+  .proj-table-head,.proj-row{grid-template-columns:110px 60px 80px 1fr}
+  .shell{padding:24px 14px 60px}
+  .res-hero{padding:28px 20px}
+}
+</style>
+</head>
+<body>
+
+<div class="site-header">
+  <a href="https://www.reddit.com/r/RupeeStories/" target="_blank">&#8599; r/RupeeStories</a>
+  <a href="https://rupeestories.substack.com" target="_blank">Rupee Stories Newsletter</a>
+</div>
+
+<div class="hero-banner">
+  <h1>RNOR <em>Status</em> Calculator</h1>
+  <p>Enter your return date and days in India per year. We'll determine your status and show exactly how long your RNOR window lasts.</p>
+  <div class="hero-pills">
+    <span class="pill">&#128274; No login</span>
+    <span class="pill">&#128225; No data collected</span>
+    <span class="pill">&#127757; FY 2025-26 · Auto-updated</span>
+  </div>
+</div>
+
+<div class="shell">
+
+  <div class="prog" style="margin-top:32px">
+    <div class="ps act" id="p0"></div>
+    <div class="ps" id="p1"></div>
+    <div class="ps" id="p2"></div>
+  </div>
+
+  <!-- ══ STEP 1: PROFILE + DATE ══ -->
+  <div class="step show" id="step0">
+    <div class="sh">
+      <div class="sl">Step 1 of 2</div>
+      <div class="st">Your profile &amp; return date</div>
+      <div class="ss">The return date generates your financial year timeline automatically. Citizenship determines which residency thresholds apply.</div>
+    </div>
+
+    <div class="sec-lbl">When did you (or will you) return to India?</div>
+    <div class="date-field">
+      <input type="date" id="return-date" oninput="onDateChange(this.value)">
+      <div class="fy-display" id="fy-display"></div>
+    </div>
+
+    <div class="sec-lbl">Citizenship / origin</div>
+    <div class="rc-grid">
+      <div class="rc on" data-group="citizenship" data-val="citizen"><div class="rc-lbl">Indian Citizen</div><div class="rc-sub">Indian passport holder</div></div>
+      <div class="rc" data-group="citizenship" data-val="pio"><div class="rc-lbl">PIO / OCI</div><div class="rc-sub">Person of Indian Origin</div></div>
+      <div class="rc" data-group="citizenship" data-val="foreign"><div class="rc-lbl">Foreign National</div><div class="rc-sub">No Indian origin</div></div>
+    </div>
+
+    <div class="sec-lbl">Your situation this financial year</div>
+    <div class="rc-grid">
+      <div class="rc on" data-group="situation" data-val="visiting"><div class="rc-lbl">Returning to India</div><div class="rc-sub">NRI/citizen moving back</div></div>
+      <div class="rc" data-group="situation" data-val="employment_abroad"><div class="rc-lbl">Left for employment abroad</div><div class="rc-sub">Going overseas for work</div></div>
+      <div class="rc" data-group="situation" data-val="crew"><div class="rc-lbl">Crew of Indian ship</div><div class="rc-sub">Working on Indian vessel</div></div>
+      <div class="rc" data-group="situation" data-val="other"><div class="rc-lbl">Other / living in India</div><div class="rc-sub">No special situation</div></div>
+    </div>
+
+    <div id="deemed-section">
+      <div class="sec-lbl">India-source income &amp; tax liability — Sec 6(1) Proviso 2 &amp; Sec 6(1A)</div>
+      <div class="tg-row">
+        <div>
+          <div class="tg-lbl">India-source income exceeds ₹15 Lakh this FY</div>
+          <div class="tg-sub">Salary, rent, business income originating in India — excludes pure foreign income</div>
+        </div>
+        <div class="knob" id="income-knob"></div>
+      </div>
+      <div class="info-box" id="income-120-note" style="display:none;margin-top:10px"><p>&#9888;&#65039; <strong>120-day rule active [Sec 6(1) Proviso 2, FA 2020]:</strong> Indian citizen/PIO visiting India with India-source income &gt;&#8239;₹15L — Test 2 threshold drops from 60 to <strong>120 days</strong>. Spending 100+ days in India could make you resident under this rule.</p></div>
+      <div class="tg-row" style="margin-top:2px">
+        <div>
+          <div class="tg-lbl">Not liable to pay tax in any other country</div>
+          <div class="tg-sub">Indian citizen with no foreign tax domicile — Sec 6(1A) deemed resident trigger</div>
+        </div>
+        <div class="knob" id="deemed-knob"></div>
+      </div>
+    </div>
+
+    <div class="info-box" id="threshold-info-box"><p id="threshold-info-text"><strong>Standard 60-day rule [Sec 6(1)(b)]:</strong> Test 2 threshold is 60 days. If you spend 60+ days in India AND 365+ days in the preceding 4 FYs, you qualify as resident.</p></div>
+
+    <div class="btn-row"><button class="btn btn-p" onclick="goToStep1()">Next: India Days &#8594;</button></div>
+  </div>
+
+  <!-- ══ STEP 2: DAYS TABLE ══ -->
+  <div class="step" id="step1">
+    <div class="sh">
+      <div class="sl">Step 2 of 2</div>
+      <div class="st">Days spent in India</div>
+      <div class="ss">Enter days physically present in India for each financial year. <strong>Both arrival day and departure day count as 1 day each</strong> — add all trips together for the full year total. Use passport stamps or travel records.</div>
+    </div>
+
+    <!-- Live stats -->
+    <div class="stats-bar" id="stats-bar">
+      <div class="stat-tile" id="stat-nri">
+        <div class="stat-val gold" id="stat-nri-val">—</div>
+        <div class="stat-label">Resident years (of 10)</div>
+        <div class="stat-threshold" id="stat-nri-th"></div>
+      </div>
+      <div class="stat-tile" id="stat-7yr">
+        <div class="stat-val gold" id="stat-7yr-val">—</div>
+        <div class="stat-label">Days in past 7 FYs</div>
+        <div class="stat-threshold" id="stat-7yr-th"></div>
+      </div>
+      <div class="stat-tile" id="stat-4yr">
+        <div class="stat-val gold" id="stat-4yr-val">—</div>
+        <div class="stat-label">Days in past 4 FYs</div>
+        <div class="stat-threshold" id="stat-4yr-th"></div>
+      </div>
+    </div>
+
+    <!-- FY Table -->
+    <div class="fy-table-wrap">
+      <div class="fy-table-head">
+        <div>Financial Year</div>
+        <div style="text-align:right">Days in India</div>
+        <div style="text-align:center">Status</div>
+      </div>
+      <div id="fy-table-rows"></div>
+    </div>
+
+    <!-- Post-return projection -->
+    <div class="proj-card">
+      <h3>Post-return plan</h3>
+      <p>How many days per year do you plan to spend in India after returning? This projects how long your RNOR window lasts.</p>
+      <div class="proj-input-row">
+        <input type="number" class="proj-input" id="proj-days" min="0" max="365" value="200" oninput="updateStats()">
+        <div class="proj-input-label">days per year in India (planned)</div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-g" onclick="goTo(0)">&#8592; Back</button>
+      <button class="btn btn-p" onclick="calculate()">Calculate My Status &#8594;</button>
+    </div>
+  </div>
+
+  <!-- ══ RESULTS ══ -->
+  <div class="step" id="step2">
+    <div id="results-content"></div>
+  </div>
+
+</div><!-- /shell -->
+
+<script>
+// ── State ──
+var S = {
+  returnDate: '',
+  citizenship: 'citizen',
+  situation: 'visiting',
+  deemed: false,
+  incomeOver15L: false,   // triggers 120-day rule [Sec 6(1) Proviso 2]
+  days: {},
+  projDays: 200
+};
+
+// ── FY helpers ──
+function getFYStart(dateStr) {
+  var d = new Date(dateStr);
+  var m = d.getMonth() + 1; // 1-12
+  return m <= 3 ? d.getFullYear() - 1 : d.getFullYear();
+}
+function fyLabel(s) { return 'FY ' + s + '-' + String(s+1).slice(-2); }
+function fyDateLabel(s) { return '1 Apr ' + s + ' – 31 Mar ' + (s+1); }
+function daysRemainingInFY(dateStr) {
+  var d = new Date(dateStr);
+  var fyStart = getFYStart(dateStr);
+  var fyEnd = new Date(fyStart + 1, 2, 31); // Mar 31
+  var diff = Math.round((fyEnd - d) / 86400000) + 1;
+  return Math.max(0, Math.min(366, diff));
+}
+function isNRIYear(days) { return days < 182; }
+
+// ── Step 1 init ──
+window.onload = function() {
+  // Default return date to today
+  var today = new Date();
+  var yyyy = today.getFullYear();
+  var mm = String(today.getMonth()+1).padStart(2,'0');
+  var dd = String(today.getDate()).padStart(2,'0');
+  document.getElementById('return-date').value = yyyy+'-'+mm+'-'+dd;
+  onDateChange(yyyy+'-'+mm+'-'+dd);
+
+  document.querySelectorAll('.rc').forEach(function(el) {
+    el.addEventListener('click', function() {
+      var g = el.dataset.group, v = el.dataset.val;
+      document.querySelectorAll('.rc[data-group="'+g+'"]').forEach(function(c){ c.classList.remove('on'); });
+      el.classList.add('on'); S[g] = v;
+      if (g === 'citizenship' || g === 'situation') updateDeemedSection();
+    });
+  });
+  document.getElementById('income-knob').addEventListener('click', function() {
+    S.incomeOver15L = !S.incomeOver15L; this.classList.toggle('on', S.incomeOver15L);
+    updateDeemedSection();
+  });
+  document.getElementById('deemed-knob').addEventListener('click', function() {
+    S.deemed = !S.deemed; this.classList.toggle('on', S.deemed);
+  });
+};
+
+function updateDeemedSection() {
+  var isCitizenOrPIO = S.citizenship === 'citizen' || S.citizenship === 'pio';
+  document.getElementById('deemed-section').style.display = isCitizenOrPIO ? 'block' : 'none';
+
+  // 120-day note: only for visiting citizens/PIOs with income > 15L
+  var show120 = isCitizenOrPIO && S.situation === 'visiting' && S.incomeOver15L;
+  document.getElementById('income-120-note').style.display = show120 ? 'block' : 'none';
+
+  // Threshold info box — update text based on situation
+  var infoBox = document.getElementById('threshold-info-box');
+  var infoText = document.getElementById('threshold-info-text');
+  if (!isCitizenOrPIO) {
+    infoBox.style.display = 'none';
+  } else {
+    infoBox.style.display = 'block';
+    var isEmpAbroad = S.situation === 'employment_abroad' || S.situation === 'crew';
+    var isVisitHigh = S.situation === 'visiting' && S.incomeOver15L;
+    if (isEmpAbroad) {
+      infoText.innerHTML = '<strong>182-day exception [Sec 6(1) Proviso 1]:</strong> Left India for employment abroad — Test 2 threshold is 182 days. This is the hardest bar to cross.';
+    } else if (isVisitHigh) {
+      infoText.innerHTML = '<strong>120-day rule [Sec 6(1) Proviso 2, FA 2020]:</strong> Visiting India with India income &gt; ₹15L — Test 2 threshold is <strong>120 days</strong> (not 60). Spend fewer than 120 days to stay NRI.';
+    } else {
+      infoText.innerHTML = '<strong>Standard 60-day rule [Sec 6(1)(b)]:</strong> Test 2 threshold is 60 days. If you spend 60+ days in India AND 365+ days in the preceding 4 FYs, you qualify as resident.';
+    }
+  }
+}
+
+function onDateChange(val) {
+  S.returnDate = val;
+  if (!val) return;
+  var fyStart = getFYStart(val);
+  var disp = document.getElementById('fy-display');
+  disp.className = 'fy-display show';
+  disp.innerHTML =
+    'Return FY: <strong>' + fyLabel(fyStart) + '</strong> (' + fyDateLabel(fyStart) + ')<br>' +
+    'Assessing: preceding 10 FYs &nbsp;·&nbsp; ' + fyLabel(fyStart - 10) + ' through ' + fyLabel(fyStart - 1);
+}
+
+// ── Navigate to Step 2 ──
+function goToStep1() {
+  if (!S.returnDate) { alert('Please enter your return date to India.'); return; }
+  buildFYTable();
+  goTo(1);
+}
+
+// ── Build FY table ──
+function buildFYTable() {
+  var fyStart = getFYStart(S.returnDate);
+  var html = '';
+
+  // 10 preceding FYs (oldest to newest)
+  for (var i = 10; i >= 1; i--) {
+    var fy = fyStart - i;
+    var key = 'p' + fy;
+    var defaultVal = S.days[key] !== undefined ? S.days[key] : 0;
+    html += '<div class="fy-row" id="row-'+key+'">' +
+      '<div><div class="fy-label-text">' + fyLabel(fy) + '</div>' +
+      '<div class="fy-date-text">' + fyDateLabel(fy) + '</div></div>' +
+      '<div style="text-align:right"><input class="fy-input" type="number" min="0" max="366" value="'+defaultVal+'" ' +
+        'id="inp-'+key+'" oninput="onDaysChange(\''+key+'\',this.value)"></div>' +
+      '<div style="text-align:center"><span class="fy-badge" id="badge-'+key+'"></span></div>' +
+    '</div>';
+  }
+
+  // Return FY row
+  var retKey = 'ret' + fyStart;
+  var retDefault = S.days[retKey] !== undefined ? S.days[retKey] : daysRemainingInFY(S.returnDate);
+  html += '<div class="fy-row return-fy" id="row-'+retKey+'">' +
+    '<div><div class="fy-label-text">&#9733; ' + fyLabel(fyStart) + ' (Return FY)</div>' +
+    '<div class="fy-date-text">' + fyDateLabel(fyStart) + ' &nbsp;·&nbsp; days from return date</div></div>' +
+    '<div style="text-align:right"><input class="fy-input" type="number" min="0" max="366" value="'+retDefault+'" ' +
+      'id="inp-'+retKey+'" oninput="onDaysChange(\''+retKey+'\',this.value)" style="border-color:var(--gold)"></div>' +
+    '<div style="text-align:center"><span class="fy-badge ret" id="badge-'+retKey+'">Return</span></div>' +
+  '</div>';
+
+  document.getElementById('fy-table-rows').innerHTML = html;
+
+  // Seed state from current inputs
+  for (var j = 10; j >= 1; j--) {
+    var k = 'p' + (fyStart - j);
+    S.days[k] = parseInt(document.getElementById('inp-'+k).value) || 0;
+  }
+  S.days[retKey] = parseInt(document.getElementById('inp-'+retKey).value) || 0;
+  S.projDays = parseInt(document.getElementById('proj-days').value) || 200;
+
+  updateStats();
+}
+
+function onDaysChange(key, val) {
+  S.days[key] = Math.max(0, Math.min(366, parseInt(val) || 0));
+  updateStats();
+}
+
+// ── Live stats update ──
+function updateStats() {
+  if (!S.returnDate) return;
+  var fyStart = getFYStart(S.returnDate);
+
+  // Build preceding 10 array (oldest first)
+  var prec10 = [];
+  for (var i = 10; i >= 1; i--) {
+    prec10.push(S.days['p' + (fyStart - i)] || 0);
+  }
+
+  var p7 = prec10.slice(3).reduce(function(a,b){return a+b;},0);  // last 7 of preceding 10
+  var p4 = prec10.slice(6).reduce(function(a,b){return a+b;},0);  // last 4 of preceding 10
+  var nriYrs = prec10.filter(function(d){return d < 182;}).length;
+
+  var resYrs = 10 - nriYrs;
+
+  // Update badges
+  for (var j = 10; j >= 1; j--) {
+    var key = 'p' + (fyStart - j);
+    var badge = document.getElementById('badge-'+key);
+    if (!badge) continue;
+    var d = S.days[key] || 0;
+    if (isNRIYear(d)) {
+      badge.className = 'fy-badge nri'; badge.textContent = 'NRI';
+    } else {
+      badge.className = 'fy-badge res'; badge.textContent = 'Resident';
+    }
+  }
+
+  // Update stat tiles — use Resident years (Sec 6(6) framing)
+  setStatTile('stat-nri', 'stat-nri-val', 'stat-nri-th', resYrs,
+    resYrs <= 1 ? 'good' : resYrs <= 3 ? 'warn' : 'bad',
+    resYrs + ' / 10',
+    resYrs <= 1 ? '✓ RNOR Condition A met [Sec 6(6)(a)]' : resYrs + ' resident yrs — need ≤1 for Cond. A');
+
+  setStatTile('stat-7yr', 'stat-7yr-val', 'stat-7yr-th', p7,
+    p7 <= 729 ? 'good' : 'bad',
+    p7 + ' days',
+    p7 <= 729 ? '✓ RNOR Condition B met (≤729)' : '✗ Exceeds 729-day threshold');
+
+  setStatTile('stat-4yr', 'stat-4yr-val', 'stat-4yr-th', p4,
+    p4 >= 365 ? 'warn' : 'good',
+    p4 + ' days',
+    p4 >= 365 ? '⚠ Residency additional cond. may apply' : '365+ triggers additional condition');
+}
+
+function setStatTile(tileId, valId, thId, val, cls, display, note) {
+  var tile = document.getElementById(tileId);
+  var valEl = document.getElementById(valId);
+  var thEl = document.getElementById(thId);
+  tile.className = 'stat-tile' + (cls ? ' ' + cls : '');
+  valEl.textContent = display;
+  valEl.className = 'stat-val ' + (cls === 'good' ? 'green' : cls === 'bad' ? 'red' : 'gold');
+  thEl.textContent = note;
+  thEl.style.color = cls === 'good' ? 'var(--green)' : cls === 'bad' ? 'var(--red)' : 'var(--orange)';
+}
+
+// ── Stored result for export ──
+var _exportData = null;
+
+function goTo(n) {
+  document.querySelectorAll('.step').forEach(function(el){ el.classList.remove('show'); });
+  document.getElementById('step'+n).classList.add('show');
+  for (var i = 0; i < 3; i++) {
+    var p = document.getElementById('p'+i);
+    p.className = 'ps' + (i===n?' act':i<n?' done':'');
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ── Core compute ──
+function compute() {
+  var fyStart = getFYStart(S.returnDate);
+  var prec10 = [];
+  for (var i = 10; i >= 1; i--) prec10.push(S.days['p'+(fyStart-i)] || 0);
+
+  var retDays = S.days['ret'+fyStart] || 0;
+  var p7 = prec10.slice(3).reduce(function(a,b){return a+b;},0);
+  var p4 = prec10.slice(6).reduce(function(a,b){return a+b;},0);
+  var nriYrs = prec10.filter(function(d){return d<182;}).length;
+  var resYrs = 10 - nriYrs; // Resident years in preceding 10 FYs (used in Sec 6(6))
+
+  // ── Threshold determination ──
+  // Proviso 1: Left for employment/crew → 182 days
+  // Proviso 2 (FA 2020): Citizen/PIO visiting + India income > ₹15L → 120 days
+  // Default: 60 days
+  var isCitizenOrPIO = S.citizenship==='citizen' || S.citizenship==='pio';
+  var isEmpAbroad = isCitizenOrPIO && (S.situation==='employment_abroad' || S.situation==='crew');
+  var isVisitHigh = isCitizenOrPIO && S.situation==='visiting' && S.incomeOver15L;
+  var t2, t2rule;
+  if (isEmpAbroad)       { t2=182; t2rule='Sec 6(1) Proviso 1 — left for employment'; }
+  else if (isVisitHigh)  { t2=120; t2rule='Sec 6(1) Proviso 2 (FA 2020) — income > ₹15L'; }
+  else                   { t2=60;  t2rule='Sec 6(1)(b) — standard rule'; }
+
+  // Sec 6(1)(a): 182-day test
+  var c1 = retDays >= 182;
+  // Sec 6(1)(b): t2-day + 4-year test
+  var c2 = retDays >= t2 && p4 >= 365;
+  var isResident = c1 || c2;
+
+  // Sec 6(1A): Deemed resident
+  var isDeemedResident = !isResident && S.citizenship==='citizen' && S.incomeOver15L && S.deemed;
+
+  var status, rA, rB;
+  if (isDeemedResident) {
+    status='RNOR'; rA=false; rB=false;
+  } else if (!isResident) {
+    status='NRI'; rA=false; rB=false;
+  } else {
+    // Sec 6(6): RNOR if (A) NRI in 9+ of preceding 10 FYs  OR  (B) ≤729 days in preceding 7 FYs
+    rA = nriYrs >= 9;  // equivalently: resYrs <= 1
+    rB = p7 <= 729;
+    status = (rA||rB) ? 'RNOR' : 'ROR';
+  }
+
+  return {status,fyStart,retDays,prec10,p7,p4,nriYrs,resYrs,c1,c2,t2,t2rule,isEmpAbroad,isVisitHigh,rA,rB,isResident,isDeemedResident};
+}
+
+// ── Project RNOR window ──
+function projectWindow(r) {
+  var history = r.prec10.slice();
+  history.push(r.retDays);
+  var isCitizenOrPIO = S.citizenship==='citizen' || S.citizenship==='pio';
+  var isEmpAbroad = isCitizenOrPIO && (S.situation==='employment_abroad'||S.situation==='crew');
+  var isVisitHigh = isCitizenOrPIO && S.incomeOver15L; // post-return, they're resident so situation changes
+  var t2 = isEmpAbroad ? 182 : isVisitHigh ? 120 : 60;
+  var pd = Math.max(0, Math.min(365, parseInt(document.getElementById('proj-days').value)||200));
+  var rows = [];
+  var rorCount = 0;
+
+  for (var y = 1; y <= 12; y++) {
+    var fyS = r.fyStart + y;
+    var prec10 = history.slice(-10);
+    var prec7  = history.slice(-7);
+    var prec4  = history.slice(-4);
+    var p4t = prec4.reduce(function(a,b){return a+b;},0);
+    var p7t = prec7.reduce(function(a,b){return a+b;},0);
+    var nri = prec10.filter(function(d){return d<182;}).length;
+    var resY = 10 - nri;
+
+    var c1 = pd >= 182;
+    var c2 = pd >= t2 && p4t >= 365;
+    var res = c1 || c2;
+    var st, note;
+    if (!res) {
+      st = 'NRI'; note = pd + ' days — below residency threshold';
+    } else {
+      var condA = nri >= 9; // resY <= 1
+      var condB = p7t <= 729;
+      if (condA || condB) {
+        st = 'RNOR';
+        note = condA ? 'Cond. A [Sec 6(6)(a)]: '+resY+' resident yr(s) of 10' : 'Cond. B [Sec 6(6)(b)]: '+p7t+' days / 7 FYs';
+      } else {
+        st = 'ROR';
+        note = 'Neither RNOR condition met [Sec 6(6)]';
+        rorCount++;
+      }
+    }
+    rows.push({fy:fyLabel(fyS), days:pd, status:st, note});
+    history.push(pd);
+    if (rorCount >= 2) break;
+  }
+  return rows;
+}
+
+// ── Main calculate ──
+function calculate() {
+  S.projDays = parseInt(document.getElementById('proj-days').value) || 200;
+  var r = compute();
+  var proj = projectWindow(r);
+
+  var fullName = {NRI:'Non-Resident Indian',RNOR:'Resident but Not Ordinarily Resident',ROR:'Resident and Ordinarily Resident'};
+  var reason = {
+    NRI: 'You spent '+r.retDays+' days in India in '+fyLabel(r.fyStart)+'. '+(
+      r.isEmpAbroad ? 'The employment-abroad exception [Sec 6(1) Proviso 1] applies — Test 2 threshold is 182 days. Neither Test 1 nor Test 2 was met.' :
+      r.isVisitHigh ? 'The 120-day rule [Sec 6(1) Proviso 2, FA 2020] applies — Test 2 threshold is 120 days. Neither Test 1 nor Test 2 was met.' :
+      'Neither the 182-day rule [Sec 6(1)(a)] nor the '+r.t2+'-day + 4-year rule [Sec 6(1)(b)] was met.'
+    ),
+    RNOR: r.isDeemedResident
+      ? 'You are an Indian citizen not liable to tax in any other country with India income > ₹15L. Under Sec 6(1A) (Finance Act 2020) you are a deemed resident, automatically classified as RNOR under Explanation 1 to Sec 6(6).'
+      : 'You are resident in India [Sec 6(1)] but qualify as RNOR [Sec 6(6)] because '+[r.rA?'you were NRI in '+r.nriYrs+' of the preceding 10 FYs [Sec 6(6)(a)]':null, r.rB?'your 7-year India total is only '+r.p7+' days [Sec 6(6)(b) — threshold: 729]':null].filter(Boolean).join(' and ')+'.',
+    ROR: 'You are Resident [Sec 6(1)] and neither RNOR condition under Sec 6(6) is met — you have '+r.resYrs+' resident year(s) in the preceding 10 FYs (need ≤1) and '+r.p7+' days in the preceding 7 FYs (need ≤729). You are fully Ordinarily Resident.'
+  };
+
+  // Conditions with legal citations
+  var conds = [];
+  if (r.status==='NRI') {
+    conds.push({pass:r.c1, l:'Test 1 [Sec 6(1)(a)] — 182-day rule', d:r.retDays+' days in '+fyLabel(r.fyStart)+' — need 182+'});
+    if (r.isEmpAbroad) {
+      conds.push({warn:true, l:'Exception [Sec 6(1) Proviso 1] — threshold raised to 182 days', d:'Left India for employment abroad / ship crew — Test 2 also requires 182+ days'});
+    } else if (r.isVisitHigh) {
+      conds.push({pass:r.c2, l:'Test 2 [Sec 6(1)(b) + Proviso 2] — 120-day rule (income > ₹15L)', d:r.retDays+' days this FY (need 120+) · '+r.p4+' days past 4 FYs (need 365+)'});
+    } else {
+      conds.push({pass:r.c2, l:'Test 2 [Sec 6(1)(b)] — '+r.t2+'-day + 4-year rule', d:r.retDays+' days this FY (need '+r.t2+'+) · '+r.p4+' days past 4 FYs (need 365+)'});
+    }
+  }
+  if (r.status==='RNOR' && !r.isDeemedResident) {
+    conds.push({pass:true, l:'Resident this FY [Sec 6(1)]', d:r.c1?r.retDays+' days — Test 1 (182-day) met':r.retDays+' days + '+r.p4+' past-4yr days — Test 2 met'});
+    conds.push({pass:r.rA, l:'RNOR Condition A [Sec 6(6)(a)] — NRI in 9 of 10 preceding FYs', d:r.nriYrs+' NRI years of 10 ('+r.resYrs+' resident year(s)) — need NRI years ≥9'});
+    conds.push({pass:r.rB, l:'RNOR Condition B [Sec 6(6)(b)] — 729-day rule', d:r.p7+' days in preceding 7 FYs — need ≤729'});
+  }
+  if (r.status==='RNOR' && r.isDeemedResident) {
+    conds.push({warn:true, l:'Deemed Resident [Sec 6(1A)] — Finance Act 2020', d:'Indian citizen · India income > ₹15L · Not liable to tax in any other country → RNOR under Explanation 1 to Sec 6(6)'});
+  }
+  if (r.status==='ROR') {
+    conds.push({pass:true, l:'Resident this FY [Sec 6(1)]', d:r.c1?r.retDays+' days — Test 1 (182-day) met':r.retDays+' days + '+r.p4+' past-4yr days — Test 2 met'});
+    conds.push({pass:false, l:'RNOR Condition A [Sec 6(6)(a)] — NOT met', d:r.resYrs+' resident year(s) in preceding 10 FYs — need ≤1 resident year'});
+    conds.push({pass:false, l:'RNOR Condition B [Sec 6(6)(b)] — NOT met', d:r.p7+' days in past 7 FYs — exceeds 729-day threshold'});
+  }
+
+  // Implications
+  var implMap = {
+    NRI:[{i:'🌍',t:'Foreign income',v:'Not taxable in India',c:'good'},{i:'🇮🇳',t:'India income',v:'Taxable in India only',c:'neu'},{i:'💰',t:'Roth conversion window',v:'Not yet applicable',c:'mid'},{i:'🏦',t:'US 401K / retirement',v:'Not taxable in India',c:'good'},{i:'📋',t:'Schedule FA',v:'Not required',c:'good'},{i:'🔄',t:'DTAA benefit',v:'Available on India income',c:'neu'}],
+    RNOR:[{i:'🌍',t:'Foreign income',v:'Not taxable in India ✓',c:'good'},{i:'🇮🇳',t:'India income',v:'Taxable in India',c:'neu'},{i:'💰',t:'Roth conversion window',v:'OPEN — use it now',c:'good'},{i:'🏦',t:'US 401K distributions',v:'Likely exempt in India',c:'good'},{i:'📋',t:'Schedule FA',v:'May not be required',c:'good'},{i:'🔄',t:'DTAA benefit',v:'Available — verify with CPA',c:'neu'}],
+    ROR:[{i:'🌍',t:'World income',v:'Fully taxable in India',c:'bad'},{i:'🇮🇳',t:'India income',v:'Taxable in India',c:'bad'},{i:'💰',t:'Roth conversion window',v:'Closed — window missed',c:'bad'},{i:'🏦',t:'US 401K distributions',v:'Taxable in India as income',c:'bad'},{i:'📋',t:'Schedule FA',v:'Required — disclose all',c:'mid'},{i:'🔄',t:'DTAA benefit',v:'Available on foreign income',c:'neu'}]
+  };
+
+  var actsMap = {
+    NRI:[{t:'Track your India days carefully',b:'182+ days in any FY automatically makes you resident. Even the 60-day + 4-year rule can trap frequent visitors. Use a travel log or passport stamps.'},{t:'Set up NRE/NRO accounts before returning',b:'NRE accounts let you hold foreign income tax-free in India. Once you become RNOR/ROR, you must re-designate to RFC accounts.'},{t:'Build your RNOR plan now',b:'When you return, RNOR status typically lasts 2–3 years. That window is your best opportunity to convert your 401K to Roth and reset cost basis on US assets.'}],
+    RNOR:[{t:'Execute your Roth conversion strategy',b:'Convert Traditional 401K or 403b to Roth IRA during RNOR years. Indian tax law currently does not tax foreign retirement income during RNOR. Map annual conversions against your US tax bracket.'},{t:'Convert NRE accounts to RFC accounts',b:'Once resident (even RNOR), re-designate NRE/NRO to RFC (Resident Foreign Currency) accounts. RFC accounts preserve foreign currency without Indian tax implications during RNOR.'},{t:'Break US state tax residency cleanly',b:"File a final resident return in your former US state. Close local ties — voter registration, driver's license, professional licenses. CA, NY, NJ aggressively audit NRIs who maintain connections."}],
+    ROR:[{t:'Disclose all foreign assets in Schedule FA',b:'Full disclosure of all foreign assets — bank accounts, equities, retirement accounts, real estate — in Schedule FA of your ITR. Non-disclosure carries severe penalties under the Black Money Act.'},{t:'Claim DTAA treaty benefits on US income',b:'India–US DTAA provides double-taxation relief. Claim treaty benefits on US-source interest, dividends, and capital gains. Consult a cross-border CPA for specific treatment per income type.'},{t:'Plan future moves strategically',b:'If you plan to move abroad again, RNOR status only applies for a limited transitional window. Significant foreign asset restructuring is far better done before becoming ROR.'}]
+  };
+
+  // RNOR window summary
+  var rnorYears = proj.filter(function(p){return p.status==='RNOR';});
+  var windowSummary = '';
+  if (r.status === 'RNOR' && rnorYears.length > 0) {
+    windowSummary = 'Your RNOR window: <strong>' + fyLabel(r.fyStart) + '</strong> through <strong>' + rnorYears[rnorYears.length-1].fy + '</strong> — ' + (1 + rnorYears.length) + ' financial years.';
+  } else if (r.status === 'RNOR') {
+    windowSummary = 'Return FY (' + fyLabel(r.fyStart) + ') is your only RNOR year based on current inputs.';
+  }
+
+  // Build HTML
+  var h = '';
+
+  // Hero
+  h += '<div class="res-hero">';
+  h += '<div class="res-badge">Your status · ' + fyLabel(r.fyStart) + '</div>';
+  h += '<div class="status-name">'+r.status+'</div>';
+  h += '<div class="status-full">'+fullName[r.status]+'</div>';
+  h += '<div class="status-reason">'+reason[r.status]+'</div>';
+  h += '</div>';
+
+  // RNOR window box
+  if (r.status === 'RNOR') {
+    h += '<div class="rnor-box"><div class="rnor-box-title">&#9884; Your RNOR Window</div>';
+    h += '<div class="rnor-box-body">' + windowSummary + ' During this window, foreign income — US salary, dividends, retirement distributions — is <strong>not taxable in India</strong>. This is the optimal time for Roth conversions, resetting US asset cost basis, and restructuring cross-border holdings. Every year of this window has real financial value. Do not waste it.</div></div>';
+  }
+
+  // Conditions
+  h += '<div class="sec-title">How this was determined</div><div class="cond-list">';
+  conds.forEach(function(c) {
+    var cls = c.warn ? 'warn' : c.pass ? 'pass' : 'fail';
+    var icon = c.warn ? '⚡' : c.pass ? '✓' : '✗';
+    h += '<div class="cond '+cls+'"><div class="cond-icon">'+icon+'</div><div><strong>'+c.l+'</strong><span>'+c.d+'</span></div></div>';
+  });
+  h += '</div>';
+
+  // Projection table
+  if (proj.length > 0) {
+    h += '<div class="sec-title">&#128202; Your RNOR window projection</div>';
+    h += '<div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.5">Based on <strong>'+S.projDays+' days/year</strong> planned in India after returning. Adjust the number in Step 2 to see different scenarios.</div>';
+    h += '<div class="proj-table-wrap"><div class="proj-table-head"><div>Financial Year</div><div>Days</div><div>Status</div><div>Notes</div></div>';
+
+    // Return FY row first
+    var retCls = r.status==='NRI'?'nri-row':r.status==='RNOR'?'rnor-row':'ror-row';
+    h += '<div class="proj-row return-row">' +
+      '<div class="proj-fy">&#9733; '+fyLabel(r.fyStart)+'</div>' +
+      '<div class="proj-days">'+r.retDays+'</div>' +
+      '<div><span class="proj-status '+r.status.toLowerCase()+'">'+r.status+'</span></div>' +
+      '<div class="proj-note">Return FY — days from return date</div>' +
+    '</div>';
+
+    proj.forEach(function(p) {
+      var rowCls = p.status==='NRI'?'nri-row':p.status==='RNOR'?'rnor-row':'ror-row';
+      h += '<div class="proj-row '+rowCls+'">' +
+        '<div class="proj-fy">'+p.fy+'</div>' +
+        '<div class="proj-days">'+p.days+'</div>' +
+        '<div><span class="proj-status '+p.status.toLowerCase()+'">'+p.status+'</span></div>' +
+        '<div class="proj-note">'+p.note+'</div>' +
+      '</div>';
+    });
+    h += '</div>';
+  }
+
+  // Tax implications
+  h += '<div class="sec-title">Tax implications</div><div class="impl-grid">';
+  implMap[r.status].forEach(function(m) {
+    h += '<div class="impl"><div class="impl-icon">'+m.i+'</div><div class="impl-title">'+m.t+'</div><div class="impl-val '+m.c+'">'+m.v+'</div></div>';
+  });
+  h += '</div>';
+
+  // Actions
+  h += '<div class="sec-title">Your top 3 actions</div><div class="acts">';
+  actsMap[r.status].forEach(function(a, i) {
+    h += '<div class="act"><div class="act-num">'+(i+1)+'</div><div><div class="act-title">'+a.t+'</div><div class="act-body">'+a.b+'</div></div></div>';
+  });
+  h += '</div>';
+
+  h += '<div class="result-footer"><div class="footer-note">r/rupeestories &nbsp;·&nbsp; rupeestories.substack.com &nbsp;·&nbsp; No data collected</div><button class="btn-retake" onclick="goTo(0)">&#8617; Recalculate</button></div>';
+
+  // Export buttons
+  h += '<div class="export-row" style="margin-top:20px">' +
+    '<button class="btn-export" onclick="exportCSV()">' +
+      '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3M3 12h10"/></svg>' +
+      'Download CSV' +
+    '</button>' +
+    '<button class="btn-export" onclick="exportPDF()">' +
+      '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1" width="9" height="14" rx="1"/><path d="M9 1l3 3v11H2"/><path d="M9 1v3h3"/><path d="M5 8h5M5 11h3"/></svg>' +
+      'Download PDF report' +
+    '</button>' +
+  '</div>';
+
+  h += '<div style="margin-top:20px;padding:14px 16px;background:#faf6f0;border:1px solid var(--border);border-radius:10px;font-size:11px;color:var(--muted);line-height:1.7;font-family:var(--mono)">&#128204; <strong style="color:var(--text)">Educational use only.</strong> This calculator applies Sec 6 of the Income Tax Act, 1961 based on your inputs. Final residential status may depend on individual facts, CBDT circulars, judicial rulings, and treaty positions. Consult a qualified cross-border tax professional for advice specific to your situation.</div>';
+
+  // Store result for export functions
+  _exportData = { r: r, proj: proj };
+
+  document.getElementById('results-content').innerHTML = h;
+  goTo(2);
+}
+
+// ── CSV Export ──
+function exportCSV() {
+  if (!_exportData) return;
+  var r = _exportData.r, proj = _exportData.proj;
+  var fullName = {NRI:'Non-Resident Indian', RNOR:'Resident but Not Ordinarily Resident', ROR:'Resident and Ordinarily Resident'};
+  var rows = [['Financial Year','Period','Days in India','Status','Full Status Name','Type','Notes']];
+
+  // Past 10 FYs
+  for (var i = 10; i >= 1; i--) {
+    var fy = r.fyStart - i;
+    var d = r.prec10[10 - i] || 0;
+    var st = d < 182 ? 'NRI' : 'Resident';
+    rows.push([fyLabel(fy), '1 Apr '+fy+' – 31 Mar '+(fy+1), d, st, st==='NRI'?fullName.NRI:'Resident', 'Historical', '']);
+  }
+
+  // Return FY
+  rows.push([
+    fyLabel(r.fyStart),
+    '1 Apr '+r.fyStart+' – 31 Mar '+(r.fyStart+1),
+    r.retDays,
+    r.status,
+    fullName[r.status],
+    'Return FY',
+    r.isDeemedResident ? 'Deemed Resident [Sec 6(1A)]' :
+      r.rA ? 'RNOR Cond. A met [Sec 6(6)(a)]' :
+      r.rB ? 'RNOR Cond. B met [Sec 6(6)(b)]' : ''
+  ]);
+
+  // Projected FYs
+  proj.forEach(function(p) {
+    rows.push([p.fy, '', S.projDays, p.status, fullName[p.status] || p.status, 'Projected', p.note]);
+  });
+
+  // Build CSV string
+  var csv = rows.map(function(row) {
+    return row.map(function(cell) {
+      var s = String(cell == null ? '' : cell);
+      if (s.includes(',') || s.includes('"') || s.includes('\n')) s = '"' + s.replace(/"/g, '""') + '"';
+      return s;
+    }).join(',');
+  }).join('\n');
+
+  var blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'rnor_status_' + r.fyStart + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+// ── PDF Export ──
+function exportPDF() {
+  if (!_exportData || typeof window.jspdf === 'undefined') {
+    alert('PDF library not loaded. Please check your internet connection and try again.');
+    return;
+  }
+  var r = _exportData.r, proj = _exportData.proj;
+  var fullName = {NRI:'Non-Resident Indian', RNOR:'Resident but Not Ordinarily Resident', ROR:'Resident and Ordinarily Resident'};
+  var statusColor = {
+    NRI:  { text:[45,95,168],  bg:[238,243,251] },
+    RNOR: { text:[45,122,95],  bg:[237,247,241] },
+    ROR:  { text:[192,57,43],  bg:[253,240,238] }
+  };
+
+  var doc = new window.jspdf.jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
+  var W = doc.internal.pageSize.getWidth();
+  var pageH = doc.internal.pageSize.getHeight();
+  var genDate = new Date().toLocaleDateString('en-IN', {day:'numeric', month:'long', year:'numeric'});
+
+  // ── Header bar ──
+  doc.setFillColor(26, 26, 46);
+  doc.rect(0, 0, W, 32, 'F');
+  doc.setTextColor(240, 208, 128);   // gold
+  doc.setFontSize(17);
+  doc.setFont('helvetica', 'bold');
+  doc.text('RNOR Status Report', 14, 13);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(180, 170, 150);
+  doc.text('Section 6, Income Tax Act 1961  ·  RupeeStories', 14, 20);
+  doc.text('Generated: ' + genDate, W - 14, 20, {align: 'right'});
+  doc.text('Return date: ' + (S.returnDate || 'Not specified') + '  ·  Return FY: ' + fyLabel(r.fyStart), 14, 27);
+
+  // Gold accent line
+  doc.setFillColor(201, 168, 76);
+  doc.rect(0, 32, W, 1.5, 'F');
+
+  var y = 42;
+
+  // ── Status result box ──
+  var sc = statusColor[r.status] || {text:[80,80,80], bg:[245,245,245]};
+  doc.setFillColor(sc.bg[0], sc.bg[1], sc.bg[2]);
+  doc.roundedRect(14, y, W - 28, 18, 3, 3, 'F');
+  doc.setDrawColor(sc.text[0], sc.text[1], sc.text[2]);
+  doc.setLineWidth(0.5);
+  doc.roundedRect(14, y, W - 28, 18, 3, 3, 'S');
+  doc.setTextColor(sc.text[0], sc.text[1], sc.text[2]);
+  doc.setFontSize(15);
+  doc.setFont('helvetica', 'bold');
+  doc.text(r.status + '  —  ' + (fullName[r.status] || r.status), 20, y + 7);
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  var threshDesc = r.isEmpAbroad ? 'Threshold: 182 days [Sec 6(1) Proviso 1]' :
+                   r.isVisitHigh ? 'Threshold: 120 days [Sec 6(1) Proviso 2, FA 2020]' :
+                   'Threshold: 60 days [Sec 6(1)(b)]';
+  doc.text(threshDesc + '  ·  Return FY days: ' + r.retDays + '  ·  Planned days/yr post-return: ' + S.projDays, 20, y + 14);
+  y += 26;
+
+  // ── RNOR conditions summary ──
+  if (r.status === 'RNOR' || r.status === 'ROR') {
+    doc.setFillColor(255, 252, 240);
+    doc.roundedRect(14, y, W - 28, 22, 2, 2, 'F');
+    doc.setDrawColor(201, 168, 76);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(14, y, W - 28, 22, 2, 2, 'S');
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(26, 26, 46);
+    doc.text('RNOR Conditions [Sec 6(6)]', 20, y + 6);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 70, 50);
+    var condA_text = (r.rA ? '✓' : '✗') + '  Condition A [Sec 6(6)(a)]: NRI in ' + r.nriYrs + ' of 10 preceding FYs (need 9+) — ' + r.resYrs + ' resident year(s)';
+    var condB_text = (r.rB ? '✓' : '✗') + '  Condition B [Sec 6(6)(b)]: ' + r.p7 + ' days in preceding 7 FYs (need ≤729)';
+    doc.text(condA_text, 20, y + 13);
+    doc.text(condB_text, 20, y + 19);
+    y += 30;
+  }
+
+  // ── Historical table ──
+  var tableRows = [];
+
+  // Past 10 FYs
+  for (var i = 10; i >= 1; i--) {
+    var fy = r.fyStart - i;
+    var d = r.prec10[10 - i] || 0;
+    var st = d < 182 ? 'NRI' : 'Resident';
+    tableRows.push([fyLabel(fy), '1 Apr ' + fy + ' –\n31 Mar ' + (fy + 1), String(d), st, 'Historical']);
+  }
+
+  // Return FY
+  var retNote = r.isDeemedResident ? 'Deemed Resident\n[Sec 6(1A)]' :
+    (r.rA ? 'RNOR — Cond. A\n[Sec 6(6)(a)]' : r.rB ? 'RNOR — Cond. B\n[Sec 6(6)(b)]' : r.status);
+  tableRows.push([fyLabel(r.fyStart) + '\n★ Return FY', '1 Apr ' + r.fyStart + ' –\n31 Mar ' + (r.fyStart + 1), String(r.retDays), r.status, retNote]);
+
+  // Projected FYs
+  proj.forEach(function(p) {
+    tableRows.push([p.fy + '\n[Projected]', '', String(S.projDays), p.status, p.note]);
+  });
+
+  doc.autoTable({
+    startY: y,
+    head: [['Financial Year', 'Period', 'Days', 'Status', 'Notes / Conditions']],
+    body: tableRows,
+    margin: {left: 14, right: 14},
+    headStyles: {
+      fillColor: [26, 26, 46],
+      textColor: [240, 208, 128],
+      fontSize: 8,
+      fontStyle: 'bold',
+      cellPadding: 4
+    },
+    bodyStyles: {
+      fontSize: 8,
+      cellPadding: {top: 4, bottom: 4, left: 4, right: 4},
+      textColor: [26, 26, 46],
+      lineColor: [232, 224, 208],
+      lineWidth: 0.3
+    },
+    columnStyles: {
+      0: {cellWidth: 28, fontStyle: 'bold'},
+      1: {cellWidth: 26, textColor: [120, 110, 100]},
+      2: {cellWidth: 16, halign: 'center'},
+      3: {cellWidth: 20, halign: 'center', fontStyle: 'bold'},
+      4: {cellWidth: 'auto', fontSize: 7}
+    },
+    alternateRowStyles: {fillColor: [250, 248, 243]},
+    didParseCell: function(data) {
+      if (data.section !== 'body') return;
+      var row = tableRows[data.row.index];
+      if (!row) return;
+      var st = row[3];
+      if (data.column.index === 3) {
+        var c = statusColor[st] || {text:[80,80,80], bg:[245,245,245]};
+        data.cell.styles.textColor = c.text;
+        data.cell.styles.fillColor = c.bg;
+      }
+      // Return FY row — gold tint
+      if (row[0] && row[0].indexOf('Return FY') !== -1) {
+        if (data.column.index !== 3) {
+          data.cell.styles.fillColor = [255, 252, 236];
+          data.cell.styles.textColor = [100, 80, 20];
+        }
+      }
+      // Projected rows — blue tint
+      if (row[0] && row[0].indexOf('Projected') !== -1) {
+        if (data.column.index !== 3) {
+          data.cell.styles.fillColor = [238, 243, 251];
+          data.cell.styles.textColor = [45, 95, 168];
+        }
+      }
+    },
+    didDrawPage: function(data) {
+      doc.setFontSize(7);
+      doc.setTextColor(140, 130, 120);
+      doc.setFont('helvetica', 'normal');
+      doc.text('RupeeStories · rupeestories.substack.com · Educational use only — consult a qualified tax professional.', 14, pageH - 8);
+      doc.text('Page ' + data.pageNumber, W - 14, pageH - 8, {align: 'right'});
+    }
+  });
+
+  // ── Notes section ──
+  var finalY = doc.lastAutoTable.finalY + 8;
+  if (finalY < pageH - 40) {
+    doc.setFillColor(250, 248, 243);
+    doc.roundedRect(14, finalY, W - 28, 36, 2, 2, 'F');
+    doc.setDrawColor(232, 224, 208);
+    doc.roundedRect(14, finalY, W - 28, 36, 2, 2, 'S');
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(26, 26, 46);
+    doc.text('Legal Notes — Section 6, Income Tax Act 1961', 19, finalY + 6);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 70, 60);
+    var notes = [
+      'Test 1 [Sec 6(1)(a)]: Physically present in India for ≥182 days during the FY.',
+      'Test 2 [Sec 6(1)(b)]: Present ≥60 days in FY AND ≥365 days in preceding 4 FYs.',
+      'Proviso 1 [Sec 6(1) Proviso 1]: Citizen leaving for employment abroad — Test 2 threshold raised to 182 days.',
+      'Proviso 2 [Sec 6(1) Proviso 2, FA 2020]: Citizen/PIO visiting with India income >₹15L — Test 2 threshold is 120 days.',
+      'Sec 6(1A): Indian citizen not liable to tax elsewhere + income >₹15L → Deemed Resident (RNOR).',
+      'RNOR Cond. A [Sec 6(6)(a)]: NRI in ≥9 of preceding 10 FYs.  RNOR Cond. B [Sec 6(6)(b)]: ≤729 days in preceding 7 FYs.'
+    ];
+    doc.text(notes, 19, finalY + 12, {lineHeightFactor: 1.8});
+  }
+
+  doc.save('rnor_status_report_' + r.fyStart + '.pdf');
+}
+</script>
+</body>
+</html>
